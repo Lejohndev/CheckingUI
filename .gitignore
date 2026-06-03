@@ -1,0 +1,23 @@
+# Thư mục dữ liệu
+license_plate_detector/data/
+
+# File tạm và cache của Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# File Model / Trọng số (thường có dung lượng lớn)
+*.pt
+*.pth
+
+# File Video / Đa phương tiện
+*.mp4
+*.avi
+
+# File dữ liệu Output (CSV)
+license_plate_detector/test.csv
+license_plate_detector/test_interpolated.csv
+
+# File Build của .NET / C# (cho thư mục UICHECKING)
+[Bb]in/
+[Oo]bj/

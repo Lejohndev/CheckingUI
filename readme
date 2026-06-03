@@ -1,13 +1,13 @@
-MyANPR_System/
+AICHECKING/
 │
-├── AI_Backend/                   <-- Môi trường Python (Xử lý AI)
+├── license_plate_detector/                   <-- Môi trường Python (Xử lý AI)
 │   ├── api.py                    <-- File API mới (nhận request từ Web)
 │   ├── main.py                   <-- Core nhận diện (chứa luồng YOLO, SORT)
 │   ├── util.py                   <-- Các hàm tiện ích đã sửa
 │   ├── models/                   <-- Chứa file .pt của bạn
 │   └── requirements.txt          <-- ultralytics, easyocr, fastapi, uvicorn
 │
-└── Web_Frontend/                 <-- Môi trường ASP.NET Core MVC (Giao diện)
+└── UICHECKING/                 <-- Môi trường ASP.NET Core MVC (Giao diện)
     ├── Controllers/              
     │   └── HomeController.cs     <-- Nhận video, gọi API, đọc file CSV
     ├── Models/

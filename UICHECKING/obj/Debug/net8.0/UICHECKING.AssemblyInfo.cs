@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("UICHECKING")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+054dce487212b4fb260d4123d2b0e7ab09647800")]
 [assembly: System.Reflection.AssemblyProductAttribute("UICHECKING")]
 [assembly: System.Reflection.AssemblyTitleAttribute("UICHECKING")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
