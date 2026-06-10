@@ -7,7 +7,6 @@ from ultralytics import YOLO
 import cv2
 import numpy as np
 import sys
-# Cần đảm bảo thư viện sort đã được cài đặt hoặc có folder sort trong project
 from sort.sort import *
 from util import get_car, read_license_plate, write_csv
 
@@ -26,7 +25,7 @@ csv_path = sys.argv[2] if len(sys.argv) > 2 else './test.csv'
 # LƯU Ý: ĐỔI TÊN VIDEO CỦA BẠN VÀO ĐÂY
 cap = cv2.VideoCapture(video_path)
 
-# Danh sách phương tiện theo dõi: 2 (Car), 3 (Motorcycle - QUAN TRỌNG), 5 (Bus), 7 (Truck)
+
 vehicles = [2, 3, 5, 7]
 
 # Đọc frame
@@ -39,7 +38,7 @@ while ret:
         results[frame_nmr] = {}
         
         # 1. Phát hiện phương tiện
-        detections = coco_model(frame)[0]
+        detections = coco_model(frame, device=0)[0]
         detections_ = []
         for detection in detections.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = detection

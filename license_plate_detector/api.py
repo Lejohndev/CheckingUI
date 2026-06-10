@@ -42,7 +42,7 @@ async def process_uploaded_video(video: UploadFile = File(...)):
     job_id = uuid4().hex
     input_video_path = UPLOAD_DIR / f"{job_id}{extension}"
     output_csv_path = PROCESSED_DIR / f"{job_id}.csv"
-    output_video_path = PROCESSED_DIR / f"{job_id}_processed.webm"
+    output_video_path = PROCESSED_DIR / f"{job_id}_processed.mp4"
 
     try:
         with input_video_path.open("wb") as buffer:
@@ -92,29 +92,47 @@ def process_video_by_path(req: VideoRequest):
 
 def run_pipeline(input_video_path: Path, output_csv_path: Path, output_video_path: Path):
     raw_csv_path = output_csv_path.with_name(f"{output_csv_path.stem}_raw.csv")
+    # TẠO THÊM ĐƯỜNG DẪN VIDEO TẠM THỜI (RAW)
+    raw_video_path = output_video_path.with_name(f"{output_video_path.stem}_raw.mp4")
+    
     process_env = os.environ.copy()
     process_env["PYTHONIOENCODING"] = "utf-8"
     process_env["TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD"] = "1"
 
     try:
+        # Bước 1: Trích xuất AI
         subprocess.run(
             [sys.executable, "main.py", str(input_video_path), str(raw_csv_path)],
-            cwd=BASE_DIR,
-            env=process_env,
-            check=True,
+            cwd=BASE_DIR, env=process_env, check=True,
         )
+        
+        # Bước 2: Nội suy dữ liệu
         subprocess.run(
             [sys.executable, "add_missing_data.py", str(raw_csv_path), str(output_csv_path)],
-            cwd=BASE_DIR,
-            env=process_env,
-            check=True,
+            cwd=BASE_DIR, env=process_env, check=True,
         )
+        
+        # Bước 3: Visualize (Vẽ khung hình vào file RAW TẠM THỜI)
         subprocess.run(
-            [sys.executable, "visualize.py", str(input_video_path), str(output_csv_path), str(output_video_path)],
-            cwd=BASE_DIR,
-            env=process_env,
-            check=True,
+            [sys.executable, "visualize.py", str(input_video_path), str(output_csv_path), str(raw_video_path)],
+            cwd=BASE_DIR, env=process_env, check=True,
         )
+        
+        # BƯỚC 4: Dùng FFmpeg tối ưu hóa cho Web
+        ffmpeg_cmd = [
+            "ffmpeg", "-y", "-i", str(raw_video_path),
+            "-vcodec", "libx264", "-preset", "fast", "-crf", "23",
+            "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+            str(output_video_path) 
+        ]
+        subprocess.run(
+            ffmpeg_cmd,
+            cwd=BASE_DIR, env=process_env, check=True,
+        )
+        
     finally:
+     
         if raw_csv_path.exists():
             os.remove(raw_csv_path)
+        if raw_video_path.exists():
+            os.remove(raw_video_path)

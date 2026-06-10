@@ -1,5 +1,6 @@
 # Data folders
 license_plate_detector/data/
+license_plate_detector/ffmpeg.exe
 
 # Python temporary files and virtual environments
 .venv/

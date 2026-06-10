@@ -44,7 +44,7 @@ Mo terminal thu nhat:
 cd C:\Users\OS\Downloads\CheckingUI-main\CheckingUI-main\license_plate_detector
 uv venv
 uv pip install -r requirements.txt
-uv run python -m uvicorn api:app --host 127.0.0.1 --port 8000 --reload
+uv python -m uvicorn api:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 Kiem tra API:

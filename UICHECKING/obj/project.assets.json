@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\MyProject\\AICHECKING\\UICHECKING\\UICHECKING.csproj",
+      "projectUniqueName": "D:\\MyProject\\CheckingUI\\UICHECKING\\UICHECKING.csproj",
       "projectName": "UICHECKING",
-      "projectPath": "D:\\MyProject\\AICHECKING\\UICHECKING\\UICHECKING.csproj",
+      "projectPath": "D:\\MyProject\\CheckingUI\\UICHECKING\\UICHECKING.csproj",
       "packagesPath": "C:\\Users\\Hi\\.nuget\\packages\\",
-      "outputPath": "D:\\MyProject\\AICHECKING\\UICHECKING\\obj\\",
+      "outputPath": "D:\\MyProject\\CheckingUI\\UICHECKING\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Hi\\AppData\\Roaming\\NuGet\\NuGet.Config"
