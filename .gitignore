@@ -1,0 +1,37 @@
+# Data folders
+license_plate_detector/data/
+
+# Python temporary files and virtual environments
+.venv/
+license_plate_detector/.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# AI model weights
+*.pt
+*.pth
+
+# Uploaded and processed media
+*.mp4
+*.avi
+*.mov
+*.webm
+license_plate_detector/uploads/
+license_plate_detector/processed/
+UICHECKING/wwwroot/uploads/
+UICHECKING/wwwroot/processed/
+
+# Generated CSV/output data
+*.csv
+license_plate_detector/test.csv
+license_plate_detector/test_interpolated.csv
+
+# ASP.NET Core build output and local data-protection keys
+[Bb]in/
+[Oo]bj/
+UICHECKING/App_Data/
+
+# IDE/editor files
+.vs/
+.vscode/

@@ -1,0 +1,23 @@
+AICHECKING/
+│
+├── license_plate_detector/                   <-- Môi trường Python (Xử lý AI)
+│   ├── api.py                    <-- File API mới (nhận request từ Web)
+│   ├── main.py                   <-- Core nhận diện (chứa luồng YOLO, SORT)
+│   ├── util.py                   <-- Các hàm tiện ích đã sửa
+│   ├── models/                   <-- Chứa file .pt của bạn
+│   └── requirements.txt          <-- ultralytics, easyocr, fastapi, uvicorn
+│
+└── UICHECKING/                 <-- Môi trường ASP.NET Core MVC (Giao diện)
+    ├── Controllers/              
+    │   └── HomeController.cs     <-- Nhận video, gọi API, đọc file CSV
+    ├── Models/
+    │   └── TrafficData.cs        <-- Model để map dữ liệu từ file CSV
+    ├── Views/
+    │   └── Home/
+    │       ├── Index.cshtml      <-- Giao diện Upload
+    │       └── Result.cshtml     <-- Giao diện hiện Video + Biểu đồ
+    ├── wwwroot/
+    │   ├── uploads/              <-- Nơi ASP.NET lưu video người dùng up lên
+    │   ├── processed/            <-- Nơi Python trả về out.mp4 và test.csv
+    │   └── js/                   <-- Chứa Chart.js để vẽ biểu đồ
+    └── Program.cs

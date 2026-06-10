@@ -1,0 +1,95 @@
+@{
+    ViewData["Title"] = "AI Traffic Detection";
+}
+
+<section class="hero-section">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-6">
+            <span class="hero-kicker">AI Traffic Detection</span>
+            <h1 class="hero-title">Nhận diện biển số xe từ video giao thông</h1>
+            <p class="hero-copy">
+                Tải lên video, hệ thống sẽ gửi sang AI server để nhận diện phương tiện,
+                đọc biển số và xuất dữ liệu CSV phục vụ giám sát.
+            </p>
+            <div class="d-flex flex-wrap gap-2 hero-badges">
+                <span>MP4</span>
+                <span>AVI</span>
+                <span>MOV</span>
+                <span>FastAPI + MVC</span>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="upload-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="section-label mb-1">Video Upload</p>
+                        <h2>Process video</h2>
+                    </div>
+                    <div class="status-dot"></div>
+                </div>
+
+                @if (ViewBag.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @ViewBag.ErrorMessage
+                    </div>
+                }
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-warning" role="alert" asp-validation-summary="All"></div>
+                }
+
+                <form asp-controller="Home" asp-action="UploadVideo" method="post" enctype="multipart/form-data" id="uploadForm">
+                    @Html.AntiForgeryToken()
+                    <div class="upload-zone mb-3">
+                        <input class="form-control form-control-lg" type="file" id="videoFile" name="videoFile" accept=".mp4,.avi,.mov,video/mp4,video/quicktime,video/x-msvideo" />
+                        <div class="upload-hint">
+                            <strong>Chọn video giao thông</strong>
+                            <span>Hỗ trợ .mp4, .avi, .mov</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100" id="processButton">
+                        <span class="button-text">Process Video</span>
+                        <span class="spinner-border spinner-border-sm d-none" id="processSpinner" aria-hidden="true"></span>
+                    </button>
+                </form>
+
+                <div class="loading-card d-none" id="loadingCard">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <div>
+                        <strong>Đang xử lý video...</strong>
+                        <p>AI server có thể mất vài phút tùy độ dài video.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="feature-band">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="feature-item">
+                <span>01</span>
+                <h3>Lưu video upload</h3>
+                <p>File được lưu vào thư mục uploads trước khi gửi sang AI.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-item">
+                <span>02</span>
+                <h3>Gọi FastAPI</h3>
+                <p>Backend MVC gửi video qua HttpClient đến endpoint xử lý.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-item">
+                <span>03</span>
+                <h3>Dashboard kết quả</h3>
+                <p>Video, CSV, bảng dữ liệu và biểu đồ được hiển thị cùng lúc.</p>
+            </div>
+        </div>
+    </div>
+</section>

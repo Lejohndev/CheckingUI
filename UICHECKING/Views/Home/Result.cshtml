@@ -1,0 +1,125 @@
+@model TrafficResultViewModel
+@{
+    ViewData["Title"] = "Detection Result";
+    var videoMimeType = Model.VideoPath.EndsWith(".webm", StringComparison.OrdinalIgnoreCase) ? "video/webm" : "video/mp4";
+    var vehicleLabels = System.Text.Json.JsonSerializer.Serialize(Model.VehicleTypeCounts.Keys);
+    var vehicleValues = System.Text.Json.JsonSerializer.Serialize(Model.VehicleTypeCounts.Values);
+    var timelineLabels = System.Text.Json.JsonSerializer.Serialize(Model.VehicleTimelineCounts.Keys);
+    var timelineValues = System.Text.Json.JsonSerializer.Serialize(Model.VehicleTimelineCounts.Values);
+}
+
+<section class="result-header">
+    <div>
+        <span class="section-label">Detection Result</span>
+        <h1>Dashboard nhận diện biển số</h1>
+    </div>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">Quay lại trang chủ</a>
+</section>
+
+<section class="stats-grid">
+    <div class="stat-card">
+        <span>Tổng số xe phát hiện</span>
+        <strong>@Model.TotalVehicles</strong>
+    </div>
+    <div class="stat-card">
+        <span>Tổng số biển số đọc được</span>
+        <strong>@Model.TotalPlatesRead</strong>
+    </div>
+    <div class="stat-card">
+        <span>Loại phương tiện</span>
+        <strong>@Model.VehicleTypeCounts.Count</strong>
+    </div>
+</section>
+
+<section class="row g-4">
+    <div class="col-lg-7">
+        <div class="content-panel h-100">
+            <div class="panel-title">
+                <h2>Video đã xử lý</h2>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.VideoPath))
+            {
+                <video class="processed-video" controls>
+                    <source src="@Model.VideoPath" type="@videoMimeType" />
+                    Trình duyệt của bạn không hỗ trợ thẻ video.
+                </video>
+            }
+            else
+            {
+                <div class="empty-state">Không tìm thấy video đã xử lý.</div>
+            }
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="content-panel h-100">
+            <div class="panel-title">
+                <h2>Phương tiện theo loại</h2>
+            </div>
+            <canvas id="vehicleTypeChart" height="250"></canvas>
+        </div>
+    </div>
+</section>
+
+<section class="content-panel mt-4">
+    <div class="panel-title">
+        <h2>Số lượng xe theo thời gian</h2>
+    </div>
+    <canvas id="timelineChart" height="120"></canvas>
+</section>
+
+<section class="content-panel mt-4">
+    <div class="panel-title">
+        <div>
+            <h2>Dữ liệu biển số</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.CsvPath))
+            {
+                <a href="@Model.CsvPath" class="csv-link" download>Tải CSV</a>
+            }
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle traffic-table">
+            <thead>
+                <tr>
+                    <th>Plate Number</th>
+                    <th>Vehicle Type</th>
+                    <th>Confidence</th>
+                    <th>Time Detected</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Records.Any())
+                {
+                    foreach (var item in Model.Records)
+                    {
+                        <tr>
+                            <td><span class="plate-badge">@item.PlateNumber</span></td>
+                            <td>@item.VehicleType</td>
+                            <td>@item.Confidence.ToString("0.00")</td>
+                            <td>@item.TimeDetected.ToString("HH:mm:ss dd/MM/yyyy")</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">Chưa có dữ liệu biển số trong CSV.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        window.trafficDashboardData = {
+            vehicleLabels: @Html.Raw(vehicleLabels),
+            vehicleValues: @Html.Raw(vehicleValues),
+            timelineLabels: @Html.Raw(timelineLabels),
+            timelineValues: @Html.Raw(timelineValues)
+        };
+    </script>
+}
