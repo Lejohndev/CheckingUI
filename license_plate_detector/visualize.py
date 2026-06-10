@@ -23,7 +23,7 @@ def draw_dashed_rectangle(img, pt1, pt2, color, thickness=2, dash_length=15):
     return img
 video_in = sys.argv[1] if len(sys.argv) > 1 else 'sample.mp4'
 csv_in = sys.argv[2] if len(sys.argv) > 2 else './test_interpolated.csv'
-video_out = sys.argv[3] if len(sys.argv) > 3 else './out.mp4'
+video_out = sys.argv[3] if len(sys.argv) > 3 else './out.webm'
 results = pd.read_csv(csv_in)
 # Nếu không có file test_interpolated.csv, bạn đổi lại thành test.csv nhé
 results['license_number_score'] = pd.to_numeric(results['license_number_score'], errors='coerce').fillna(0)
@@ -32,11 +32,20 @@ results['license_number_score'] = pd.to_numeric(results['license_number_score'],
 video_path = 'sample.mp4'
 cap = cv2.VideoCapture(video_in)
 
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Specify the codec
+output_extension = video_out.lower().split('.')[-1]
+fourcc = cv2.VideoWriter_fourcc(*('VP80' if output_extension == 'webm' else 'mp4v'))
 fps = cap.get(cv2.CAP_PROP_FPS)
 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-out = cv2.VideoWriter(video_out, fourcc, fps, (width, height))
+max_output_width = 1280
+if width > max_output_width:
+    output_width = max_output_width
+    output_height = int(height * (max_output_width / width))
+else:
+    output_width = width
+    output_height = height
+
+out = cv2.VideoWriter(video_out, fourcc, fps, (output_width, output_height))
 
 # Chiều cao của ảnh biển số sau khi zoom (Gốc là 400, thu nhỏ lại còn 150)
 ZOOM_H = 150 
@@ -136,6 +145,9 @@ while ret:
 
                     except Exception as e:
                         pass
+
+        if (output_width, output_height) != (width, height):
+            frame = cv2.resize(frame, (output_width, output_height), interpolation=cv2.INTER_AREA)
 
         out.write(frame)
 

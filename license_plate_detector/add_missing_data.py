@@ -10,6 +10,9 @@ def safe_car_id(c_id):
         return str(c_id)
 
 def interpolate_bounding_boxes(data):
+    if not data:
+        return []
+
     # Extract necessary data columns from input data
     frame_numbers = np.array([int(row['frame_nmr']) for row in data])
     car_ids = np.array([safe_car_id(row['car_id']) for row in data])
@@ -63,8 +66,8 @@ def interpolate_bounding_boxes(data):
             row = {}
             row['frame_nmr'] = str(frame_number)
             row['car_id'] = str(car_id)
-            row['car_bbox'] = ' '.join(map(str, car_bboxes_interpolated[i]))
-            row['license_plate_bbox'] = ' '.join(map(str, license_plate_bboxes_interpolated[i]))
+            row['car_bbox'] = '[{}]'.format(' '.join(map(str, car_bboxes_interpolated[i])))
+            row['license_plate_bbox'] = '[{}]'.format(' '.join(map(str, license_plate_bboxes_interpolated[i])))
 
             if str(frame_number) not in frame_numbers_:
                 # Imputed row, set the following fields to '0'
@@ -83,17 +86,19 @@ def interpolate_bounding_boxes(data):
     return interpolated_data
 
 
-# Load the CSV file
-with open(input_csv, 'r') as file:
+input_csv = sys.argv[1] if len(sys.argv) > 1 else "test.csv"
+output_csv = sys.argv[2] if len(sys.argv) > 2 else "test_interpolated.csv"
+header = ['frame_nmr', 'car_id', 'car_bbox', 'license_plate_bbox', 'license_plate_bbox_score', 'license_number', 'license_number_score']
+
+with open(input_csv, 'r', newline='') as file:
     reader = csv.DictReader(file)
     data = list(reader)
 
-# Interpolate missing data
 interpolated_data = interpolate_bounding_boxes(data)
 
-# Write updated data to a new CSV file
-header = ['frame_nmr', 'car_id', 'car_bbox', 'license_plate_bbox', 'license_plate_bbox_score', 'license_number', 'license_number_score']
 with open(output_csv, 'w', newline='') as file:
     writer = csv.DictWriter(file, fieldnames=header)
     writer.writeheader()
     writer.writerows(interpolated_data)
+
+print(f"Interpolated CSV saved to {output_csv}")

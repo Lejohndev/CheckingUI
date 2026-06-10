@@ -1,4 +1,9 @@
 import string
+from PIL import Image
+
+if not hasattr(Image, "ANTIALIAS"):
+    Image.ANTIALIAS = Image.Resampling.LANCZOS
+
 import easyocr
 
 # Khởi tạo reader của EasyOCR. 
@@ -113,7 +118,7 @@ def read_license_plate(license_plate_crop):
     # LÀM SẠCH: Chỉ xóa khoảng trắng và dấu chấm, GIỮ LẠI DẤU TRỪ (-)
     clean_text = full_text.replace(' ', '').replace('.', '')
     
-    print(f"   -> [OCR Raw] Đọc được chữ thô: '{clean_text}'")
+    print(f"   -> [OCR Raw] Text: '{clean_text}'")
 
     if license_complies_format(clean_text):
         return format_license(clean_text), avg_score

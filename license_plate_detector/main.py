@@ -1,3 +1,8 @@
+import os
+
+# Allow loading the trusted YOLO checkpoint created with older PyTorch/Ultralytics.
+os.environ.setdefault("TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD", "1")
+
 from ultralytics import YOLO
 import cv2
 import numpy as np
@@ -79,15 +84,15 @@ while ret:
                 license_plate_text, license_plate_text_score = read_license_plate(license_plate_crop_clahe)
 
                 if license_plate_text is not None:
-                    print(f"✅ Frame {frame_nmr} | Xe ID {car_id} | Biển: {license_plate_text} (Score: {license_plate_text_score:.2f})")
+                    print(f"[OK] Frame {frame_nmr} | Vehicle ID {car_id} | Plate: {license_plate_text} (Score: {license_plate_text_score:.2f})")
                     results[frame_nmr][car_id] = {'car': {'bbox': [xcar1, ycar1, xcar2, ycar2]},
                                                   'license_plate': {'bbox': [x1, y1, x2, y2],
                                                                     'text': license_plate_text,
                                                                     'bbox_score': score,
                                                                     'text_score': license_plate_text_score}}
                 else:
-                    print(f"❌ Frame {frame_nmr} | Xe ID {car_id} | Không đọc được chữ rõ ràng.")
+                    print(f"[NO OCR] Frame {frame_nmr} | Vehicle ID {car_id} | Cannot read plate clearly.")
 
 # Ghi kết quả ra CSV
 write_csv(results, csv_path)
-print(f" Dữ liệu được lưu vào {csv_path}")
+print(f"Data saved to {csv_path}")

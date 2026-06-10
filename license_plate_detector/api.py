@@ -1,45 +1,120 @@
 import os
+import shutil
 import subprocess
-from fastapi import FastAPI, HTTPException
+import sys
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-app = FastAPI(title="Hệ thống nhận diện biển số AI")
 
-# Định nghĩa cấu trúc dữ liệu mà ASP.NET sẽ gửi sang
+BASE_DIR = Path(__file__).resolve().parent
+UPLOAD_DIR = BASE_DIR / "uploads"
+PROCESSED_DIR = BASE_DIR / "processed"
+ALLOWED_EXTENSIONS = {".mp4", ".avi", ".mov"}
+
+UPLOAD_DIR.mkdir(exist_ok=True)
+PROCESSED_DIR.mkdir(exist_ok=True)
+
+app = FastAPI(title="AI License Plate Detection API")
+app.mount("/processed", StaticFiles(directory=PROCESSED_DIR), name="processed")
+
+
 class VideoRequest(BaseModel):
     input_video_path: str
     output_csv_path: str
     output_video_path: str
 
-@app.post("/api/process-video")
-def process_video(req: VideoRequest):
-    # Kiểm tra xem file video từ ASP.NET gửi sang có tồn tại không
-    if not os.path.exists(req.input_video_path):
-        raise HTTPException(status_code=400, detail="Không tìm thấy file video đầu vào!")
 
-    # Tạo tên file CSV tạm thời (raw) trước khi nội suy
-    raw_csv_path = req.output_csv_path.replace(".csv", "_raw.csv")
+@app.get("/")
+def health_check():
+    return {"status": "running", "message": "AI API is ready"}
+
+
+@app.post("/process")
+async def process_uploaded_video(video: UploadFile = File(...)):
+    extension = Path(video.filename or "").suffix.lower()
+    if extension not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Only .mp4, .avi and .mov files are supported.")
+
+    job_id = uuid4().hex
+    input_video_path = UPLOAD_DIR / f"{job_id}{extension}"
+    output_csv_path = PROCESSED_DIR / f"{job_id}.csv"
+    output_video_path = PROCESSED_DIR / f"{job_id}_processed.webm"
 
     try:
-        print("[1/3] Đang chạy YOLO & OCR để trích xuất dữ liệu...")
-        subprocess.run(["python", "main.py", req.input_video_path, raw_csv_path], check=True)
+        with input_video_path.open("wb") as buffer:
+            shutil.copyfileobj(video.file, buffer)
 
-        print("[2/3] Đang chạy nội suy (Interpolation) để làm mượt dữ liệu...")
-        subprocess.run(["python", "add_missing_data.py", raw_csv_path, req.output_csv_path], check=True)
-
-        print("[3/3] Đang vẽ khung và xuất video kết quả...")
-        subprocess.run(["python", "visualize.py", req.input_video_path, req.output_csv_path, req.output_video_path], check=True)
-
-        # Dọn dẹp file CSV raw tạm thời (tùy chọn)
-        if os.path.exists(raw_csv_path):
-            os.remove(raw_csv_path)
+        run_pipeline(input_video_path, output_csv_path, output_video_path)
 
         return {
-            "status": "success", 
-            "message": "Xử lý video hoàn tất!",
-            "csv_url": req.output_csv_path,
-            "video_url": req.output_video_path
+            "status": "success",
+            "message": "Video processed successfully.",
+            "csv_url": str(output_csv_path),
+            "video_url": str(output_video_path),
+            "processed_video_url": str(output_video_path),
         }
+    except subprocess.CalledProcessError as exc:
+        raise HTTPException(status_code=500, detail=f"AI processing failed: {exc}") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Unexpected API error: {exc}") from exc
+    finally:
+        await video.close()
 
-    except subprocess.CalledProcessError as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi hệ thống AI trong lúc chạy script: {str(e)}")
+
+@app.post("/api/process-video")
+def process_video_by_path(req: VideoRequest):
+    input_video_path = Path(req.input_video_path)
+    output_csv_path = Path(req.output_csv_path)
+    output_video_path = Path(req.output_video_path)
+
+    if not input_video_path.exists():
+        raise HTTPException(status_code=400, detail="Input video file was not found.")
+
+    output_csv_path.parent.mkdir(parents=True, exist_ok=True)
+    output_video_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        run_pipeline(input_video_path, output_csv_path, output_video_path)
+        return {
+            "status": "success",
+            "message": "Video processed successfully.",
+            "csv_url": str(output_csv_path),
+            "video_url": str(output_video_path),
+            "processed_video_url": str(output_video_path),
+        }
+    except subprocess.CalledProcessError as exc:
+        raise HTTPException(status_code=500, detail=f"AI processing failed: {exc}") from exc
+
+
+def run_pipeline(input_video_path: Path, output_csv_path: Path, output_video_path: Path):
+    raw_csv_path = output_csv_path.with_name(f"{output_csv_path.stem}_raw.csv")
+    process_env = os.environ.copy()
+    process_env["PYTHONIOENCODING"] = "utf-8"
+    process_env["TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD"] = "1"
+
+    try:
+        subprocess.run(
+            [sys.executable, "main.py", str(input_video_path), str(raw_csv_path)],
+            cwd=BASE_DIR,
+            env=process_env,
+            check=True,
+        )
+        subprocess.run(
+            [sys.executable, "add_missing_data.py", str(raw_csv_path), str(output_csv_path)],
+            cwd=BASE_DIR,
+            env=process_env,
+            check=True,
+        )
+        subprocess.run(
+            [sys.executable, "visualize.py", str(input_video_path), str(output_csv_path), str(output_video_path)],
+            cwd=BASE_DIR,
+            env=process_env,
+            check=True,
+        )
+    finally:
+        if raw_csv_path.exists():
+            os.remove(raw_csv_path)
