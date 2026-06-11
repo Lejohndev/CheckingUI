@@ -25,6 +25,12 @@ def interpolate_bounding_boxes(data):
 
         frame_numbers_ = [p['frame_nmr'] for p in data if safe_car_id(p['car_id']) == str(car_id)]
         print(frame_numbers_, car_id)
+        vehicle_types = [
+            p.get('vehicle_type', 'unknown')
+            for p in data
+            if safe_car_id(p['car_id']) == str(car_id) and p.get('vehicle_type')
+        ]
+        vehicle_type = max(set(vehicle_types), key=vehicle_types.count) if vehicle_types else 'unknown'
 
         # Filter data for a specific car ID
         car_mask = car_ids == car_id
@@ -66,6 +72,7 @@ def interpolate_bounding_boxes(data):
             row = {}
             row['frame_nmr'] = str(frame_number)
             row['car_id'] = str(car_id)
+            row['vehicle_type'] = vehicle_type
             row['car_bbox'] = '[{}]'.format(' '.join(map(str, car_bboxes_interpolated[i])))
             row['license_plate_bbox'] = '[{}]'.format(' '.join(map(str, license_plate_bboxes_interpolated[i])))
 
@@ -88,7 +95,7 @@ def interpolate_bounding_boxes(data):
 
 input_csv = sys.argv[1] if len(sys.argv) > 1 else "test.csv"
 output_csv = sys.argv[2] if len(sys.argv) > 2 else "test_interpolated.csv"
-header = ['frame_nmr', 'car_id', 'car_bbox', 'license_plate_bbox', 'license_plate_bbox_score', 'license_number', 'license_number_score']
+header = ['frame_nmr', 'car_id', 'vehicle_type', 'car_bbox', 'license_plate_bbox', 'license_plate_bbox_score', 'license_number', 'license_number_score']
 
 with open(input_csv, 'r', newline='') as file:
     reader = csv.DictReader(file)

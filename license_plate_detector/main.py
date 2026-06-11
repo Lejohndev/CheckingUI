@@ -11,6 +11,12 @@ from sort.sort import *
 from util import get_car, read_license_plate, write_csv
 
 results = {}
+VEHICLE_TYPE_BY_CLASS_ID = {
+    2: "car",
+    3: "motorcycle",
+    5: "bus",
+    7: "truck",
+}
 
 # Khởi tạo tracker
 mot_tracker = Sort()
@@ -28,6 +34,37 @@ cap = cv2.VideoCapture(video_path)
 
 vehicles = [2, 3, 5, 7]
 
+
+def calculate_iou(box_a, box_b):
+    x_left = max(box_a[0], box_b[0])
+    y_top = max(box_a[1], box_b[1])
+    x_right = min(box_a[2], box_b[2])
+    y_bottom = min(box_a[3], box_b[3])
+
+    if x_right <= x_left or y_bottom <= y_top:
+        return 0
+
+    intersection = (x_right - x_left) * (y_bottom - y_top)
+    area_a = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
+    area_b = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
+    return intersection / float(area_a + area_b - intersection)
+
+
+def get_vehicle_type(track, detections_with_types):
+    if len(track) == 0:
+        return "unknown"
+
+    track_box = track[:4]
+    best_type = "unknown"
+    best_iou = 0
+    for detection in detections_with_types:
+        iou = calculate_iou(track_box, detection["bbox"])
+        if iou > best_iou:
+            best_iou = iou
+            best_type = detection["vehicle_type"]
+
+    return best_type if best_iou > 0.1 else "unknown"
+
 # Đọc frame
 frame_nmr = -1
 ret = True
@@ -40,10 +77,15 @@ while ret:
         # 1. Phát hiện phương tiện
         detections = coco_model(frame, device=0)[0]
         detections_ = []
+        detections_with_types = []
         for detection in detections.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = detection
             if int(class_id) in vehicles:
                 detections_.append([x1, y1, x2, y2, score])
+                detections_with_types.append({
+                    "bbox": [x1, y1, x2, y2],
+                    "vehicle_type": VEHICLE_TYPE_BY_CLASS_ID.get(int(class_id), "unknown"),
+                })
 
         # 2. Theo dõi phương tiện (Tracking)
         if len(detections_) == 0:
@@ -58,12 +100,14 @@ while ret:
 
             # 4. Gắn biển số vào phương tiện tương ứng
             xcar1, ycar1, xcar2, ycar2, car_id = get_car(license_plate, track_ids)
+            vehicle_type = get_vehicle_type([xcar1, ycar1, xcar2, ycar2, car_id], detections_with_types)
 
            
             if car_id == -1:
                 
                 xcar1, ycar1, xcar2, ycar2 = x1, y1, x2, y2
                 car_id = f"unknown_{frame_nmr}_{int(x1)}" 
+                vehicle_type = "unknown"
             if True: 
                 # Cắt ảnh biển số
                 license_plate_crop = frame[int(y1):int(y2), int(x1): int(x2), :]
@@ -84,7 +128,8 @@ while ret:
 
                 if license_plate_text is not None:
                     print(f"[OK] Frame {frame_nmr} | Vehicle ID {car_id} | Plate: {license_plate_text} (Score: {license_plate_text_score:.2f})")
-                    results[frame_nmr][car_id] = {'car': {'bbox': [xcar1, ycar1, xcar2, ycar2]},
+                    results[frame_nmr][car_id] = {'car': {'bbox': [xcar1, ycar1, xcar2, ycar2],
+                                                          'vehicle_type': vehicle_type},
                                                   'license_plate': {'bbox': [x1, y1, x2, y2],
                                                                     'text': license_plate_text,
                                                                     'bbox_score': score,

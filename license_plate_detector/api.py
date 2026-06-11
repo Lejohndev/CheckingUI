@@ -120,7 +120,7 @@ def run_pipeline(input_video_path: Path, output_csv_path: Path, output_video_pat
         
         # BƯỚC 4: Dùng FFmpeg tối ưu hóa cho Web
         ffmpeg_cmd = [
-            "ffmpeg", "-y", "-i", str(raw_video_path),
+            get_ffmpeg_path(), "-y", "-i", str(raw_video_path),
             "-vcodec", "libx264", "-preset", "fast", "-crf", "23",
             "-pix_fmt", "yuv420p", "-movflags", "+faststart",
             str(output_video_path) 
@@ -136,3 +136,21 @@ def run_pipeline(input_video_path: Path, output_csv_path: Path, output_video_pat
             os.remove(raw_csv_path)
         if raw_video_path.exists():
             os.remove(raw_video_path)
+
+
+def get_ffmpeg_path() -> str:
+    ffmpeg_path = shutil.which("ffmpeg")
+    if ffmpeg_path:
+        return ffmpeg_path
+
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if local_app_data:
+        winget_packages = Path(local_app_data) / "Microsoft" / "WinGet" / "Packages"
+        if winget_packages.exists():
+            matches = list(winget_packages.glob("Gyan.FFmpeg_*/*/bin/ffmpeg.exe"))
+            if matches:
+                return str(matches[0])
+
+    raise FileNotFoundError(
+        "ffmpeg.exe was not found. Install FFmpeg or restart PowerShell so winget updates PATH."
+    )
