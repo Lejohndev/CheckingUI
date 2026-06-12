@@ -8,5 +8,4 @@ public class TrafficResultViewModel
     public int TotalVehicles { get; set; }
     public int TotalPlatesRead { get; set; }
     public Dictionary<string, int> VehicleTypeCounts { get; set; } = new();
-    public Dictionary<string, int> VehicleTimelineCounts { get; set; } = new();
 }

@@ -35,7 +35,6 @@ function renderTrafficCharts() {
 
   const data = window.trafficDashboardData;
   const vehicleTypeChart = document.getElementById("vehicleTypeChart");
-  const timelineChart = document.getElementById("timelineChart");
 
   if (vehicleTypeChart) {
     new Chart(vehicleTypeChart, {
@@ -53,34 +52,6 @@ function renderTrafficCharts() {
         plugins: {
           legend: {
             position: "bottom"
-          }
-        }
-      }
-    });
-  }
-
-  if (timelineChart) {
-    new Chart(timelineChart, {
-      type: "line",
-      data: {
-        labels: data.timelineLabels,
-        datasets: [{
-          label: "Vehicles",
-          data: data.timelineValues,
-          borderColor: "#0c74a5",
-          backgroundColor: "rgba(20, 184, 166, 0.18)",
-          fill: true,
-          tension: 0.35
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              precision: 0
-            }
           }
         }
       }

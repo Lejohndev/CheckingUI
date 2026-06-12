@@ -8,6 +8,7 @@ namespace UICHECKING.Controllers;
 
 public class HomeController : Controller
 {
+    private const double MinimumRecognitionConfidence = 0.5;
     private readonly ILogger<HomeController> _logger;
     private readonly IWebHostEnvironment _environment;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -95,7 +96,11 @@ public class HomeController : Controller
                 return View("Index");
             }
 
-            return View("Result", result);
+            return RedirectToAction(nameof(Result), new
+            {
+                videoPath = result.VideoPath,
+                csvPath = result.CsvPath
+            });
         }
         catch (HttpRequestException ex)
         {
@@ -118,9 +123,14 @@ public class HomeController : Controller
     }
 
     [HttpGet]
-    public IActionResult Result()
+    public IActionResult Result(string? videoPath, string? csvPath)
     {
-        return RedirectToAction(nameof(Index));
+        if (string.IsNullOrWhiteSpace(videoPath) || string.IsNullOrWhiteSpace(csvPath))
+        {
+            return RedirectToAction(nameof(Index));
+        }
+
+        return View(CreateTrafficResultViewModel(videoPath, csvPath));
     }
 
     public IActionResult Privacy()
@@ -169,23 +179,71 @@ public class HomeController : Controller
 
         var videoPath = await ResolveReturnedFileAsync(videoReference, "processed", $"{fallbackBaseName}_processed", client);
         var csvPath = await ResolveReturnedFileAsync(csvReference, "processed", $"{fallbackBaseName}.csv", client);
+        return CreateTrafficResultViewModel(videoPath, csvPath);
+    }
+
+    private TrafficResultViewModel CreateTrafficResultViewModel(string videoPath, string csvPath)
+    {
         var records = ReadTrafficDataFromCsv(csvPath);
+        var uniqueVehicles = GetUniqueVehicles(records);
+        var recognizedRecords = GetUniqueRecognizedPlates(records)
+            .ToList();
+        var vehicleTypes = uniqueVehicles.Count > 0
+            ? uniqueVehicles.Select(item => item.VehicleType)
+            : records.Select(item => item.VehicleType);
 
         return new TrafficResultViewModel
         {
             VideoPath = videoPath,
             CsvPath = csvPath,
-            Records = records,
-            TotalVehicles = records.Count,
-            TotalPlatesRead = records.Count(item => !string.IsNullOrWhiteSpace(item.PlateNumber)),
-            VehicleTypeCounts = records
-                .GroupBy(item => string.IsNullOrWhiteSpace(item.VehicleType) ? "Unknown" : item.VehicleType)
-                .ToDictionary(group => group.Key, group => group.Count()),
-            VehicleTimelineCounts = records
-                .GroupBy(item => item.TimeDetected.ToString("HH:mm", CultureInfo.InvariantCulture))
-                .OrderBy(group => group.Key)
+            Records = recognizedRecords,
+            TotalVehicles = uniqueVehicles.Count > 0 ? uniqueVehicles.Count : records.Count,
+            TotalPlatesRead = recognizedRecords.Count,
+            VehicleTypeCounts = vehicleTypes
+                .GroupBy(vehicleType => string.IsNullOrWhiteSpace(vehicleType) ? "Không xác định" : vehicleType)
                 .ToDictionary(group => group.Key, group => group.Count())
         };
+    }
+
+    private static List<TrafficData> GetUniqueVehicles(List<TrafficData> records)
+    {
+        return records
+            .Where(item => !string.IsNullOrWhiteSpace(item.CarId))
+            .GroupBy(item => item.CarId, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group
+                .OrderByDescending(item => item.Confidence)
+                .First())
+            .ToList();
+    }
+
+    private static IEnumerable<TrafficData> GetUniqueRecognizedPlates(List<TrafficData> records)
+    {
+        var recognizedRecords = records
+            .Where(IsRecognizedPlate)
+            .ToList();
+
+        var bestPlatePerVehicle = recognizedRecords
+            .Where(item => !string.IsNullOrWhiteSpace(item.CarId))
+            .GroupBy(item => item.CarId, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group
+                .OrderByDescending(item => item.Confidence)
+                .First());
+
+        var bestPlateWithoutVehicle = recognizedRecords
+            .Where(item => string.IsNullOrWhiteSpace(item.CarId))
+            .GroupBy(item => NormalizePlateKey(item.PlateNumber), StringComparer.OrdinalIgnoreCase)
+            .Where(group => !string.IsNullOrWhiteSpace(group.Key))
+            .Select(group => group
+                .OrderByDescending(item => item.Confidence)
+                .First());
+
+        return bestPlatePerVehicle
+            .Concat(bestPlateWithoutVehicle)
+            .GroupBy(item => NormalizePlateKey(item.PlateNumber), StringComparer.OrdinalIgnoreCase)
+            .Where(group => !string.IsNullOrWhiteSpace(group.Key))
+            .Select(group => group
+                .OrderByDescending(item => item.Confidence)
+                .First());
     }
 
     private async Task<string> ResolveReturnedFileAsync(
@@ -264,7 +322,7 @@ public class HomeController : Controller
                 row.TryAdd(headers[headerIndex], headerIndex < values.Count ? values[headerIndex] : string.Empty);
             }
 
-            var confidence = TryGetDouble(row, "confidence", "licenseplatebboxscore", "licensenumberscore", "score");
+            var confidence = TryGetDouble(row, "licensenumberscore", "confidence", "licenseplatebboxscore", "score");
             var timeDetected = TryGetDateTime(row, "timedetected", "timestamp", "time");
             if (timeDetected == DateTime.MinValue)
             {
@@ -274,8 +332,9 @@ public class HomeController : Controller
             records.Add(new TrafficData
             {
                 Id = records.Count + 1,
+                CarId = GetFirstValue(row, "carid", "vehicleid", "trackid") ?? string.Empty,
                 PlateNumber = GetFirstValue(row, "platenumber", "licenseplate", "licensenumber", "plate") ?? "Unknown",
-                VehicleType = GetFirstValue(row, "vehicletype", "type", "class") ?? "Unknown",
+                VehicleType = ToVietnameseVehicleType(GetFirstValue(row, "vehicletype", "type", "class")),
                 Confidence = confidence,
                 TimeDetected = timeDetected == DateTime.MinValue ? DateTime.Now : timeDetected,
                 ImagePath = GetFirstValue(row, "imagepath", "image", "thumbnail") ?? string.Empty
@@ -283,6 +342,85 @@ public class HomeController : Controller
         }
 
         return records;
+    }
+
+    private static bool IsRecognizedPlate(TrafficData item)
+    {
+        return item.Confidence >= MinimumRecognitionConfidence &&
+            !string.IsNullOrWhiteSpace(item.PlateNumber) &&
+            item.PlateNumber != "0" &&
+            item.PlateNumber != "Unknown";
+    }
+
+    private static string NormalizePlateKey(string plateNumber)
+    {
+        var cleaned = new string(plateNumber
+            .Where(char.IsLetterOrDigit)
+            .Select(char.ToUpperInvariant)
+            .ToArray());
+
+        if (string.IsNullOrWhiteSpace(cleaned))
+        {
+            return string.Empty;
+        }
+
+        var normalized = new List<char>(cleaned.Length);
+        for (var i = 0; i < cleaned.Length; i++)
+        {
+            var character = cleaned[i];
+            var shouldBeDigit = i < 2 || i >= Math.Max(0, cleaned.Length - 5);
+            normalized.Add(shouldBeDigit
+                ? NormalizePlateDigit(character)
+                : NormalizePlateLetter(character));
+        }
+
+        return new string(normalized.ToArray());
+    }
+
+    private static char NormalizePlateDigit(char character)
+    {
+        return character switch
+        {
+            'O' or 'D' or 'Q' => '0',
+            'I' or 'L' or 'T' => '1',
+            'Z' => '2',
+            'J' => '3',
+            'A' => '4',
+            'S' => '5',
+            'G' => '6',
+            'B' => '8',
+            _ => character
+        };
+    }
+
+    private static char NormalizePlateLetter(char character)
+    {
+        return character switch
+        {
+            '0' or 'O' => 'D',
+            '1' or 'I' or 'L' or 'T' => 'T',
+            '3' => 'J',
+            '4' => 'A',
+            '5' => 'S',
+            '6' => 'G',
+            '8' => 'B',
+            '2' => 'Z',
+            _ => character
+        };
+    }
+
+    private static string ToVietnameseVehicleType(string? vehicleType)
+    {
+        return NormalizeHeader(vehicleType ?? string.Empty) switch
+        {
+            "car" => "Ô tô",
+            "motorcycle" => "Xe máy",
+            "motorbike" => "Xe máy",
+            "bus" => "Xe buýt",
+            "truck" => "Xe tải",
+            "bicycle" => "Xe đạp",
+            _ => "Không xác định"
+        };
     }
 
     private static string? GetFirstString(JsonElement element, params string[] propertyNames)

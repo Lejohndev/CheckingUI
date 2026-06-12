@@ -4,8 +4,6 @@
     var videoMimeType = Model.VideoPath.EndsWith(".webm", StringComparison.OrdinalIgnoreCase) ? "video/webm" : "video/mp4";
     var vehicleLabels = System.Text.Json.JsonSerializer.Serialize(Model.VehicleTypeCounts.Keys);
     var vehicleValues = System.Text.Json.JsonSerializer.Serialize(Model.VehicleTypeCounts.Values);
-    var timelineLabels = System.Text.Json.JsonSerializer.Serialize(Model.VehicleTimelineCounts.Keys);
-    var timelineValues = System.Text.Json.JsonSerializer.Serialize(Model.VehicleTimelineCounts.Values);
 }
 
 <section class="result-header">
@@ -18,11 +16,11 @@
 
 <section class="stats-grid">
     <div class="stat-card">
-        <span>Tổng số xe phát hiện</span>
+        <span>Tổng số xe duy nhất</span>
         <strong>@Model.TotalVehicles</strong>
     </div>
     <div class="stat-card">
-        <span>Tổng số biển số đọc được</span>
+        <span>Tổng số biển số duy nhất</span>
         <strong>@Model.TotalPlatesRead</strong>
     </div>
     <div class="stat-card">
@@ -62,13 +60,6 @@
 
 <section class="content-panel mt-4">
     <div class="panel-title">
-        <h2>Số lượng xe theo thời gian</h2>
-    </div>
-    <canvas id="timelineChart" height="120"></canvas>
-</section>
-
-<section class="content-panel mt-4">
-    <div class="panel-title">
         <div>
             <h2>Dữ liệu biển số</h2>
             @if (!string.IsNullOrWhiteSpace(Model.CsvPath))
@@ -82,10 +73,10 @@
         <table class="table table-hover align-middle traffic-table">
             <thead>
                 <tr>
-                    <th>Plate Number</th>
-                    <th>Vehicle Type</th>
+                    <th>Biển số</th>
+                    <th>Loại xe</th>
                     <th>Confidence</th>
-                    <th>Time Detected</th>
+                    <th>Thời điểm</th>
                 </tr>
             </thead>
             <tbody>
@@ -104,7 +95,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-4">Chưa có dữ liệu biển số trong CSV.</td>
+                        <td colspan="4" class="text-center text-muted py-4">Chưa có dữ liệu biển số đạt confidence từ 0.5.</td>
                     </tr>
                 }
             </tbody>
@@ -117,9 +108,7 @@
     <script>
         window.trafficDashboardData = {
             vehicleLabels: @Html.Raw(vehicleLabels),
-            vehicleValues: @Html.Raw(vehicleValues),
-            timelineLabels: @Html.Raw(timelineLabels),
-            timelineValues: @Html.Raw(timelineValues)
+            vehicleValues: @Html.Raw(vehicleValues)
         };
     </script>
 }

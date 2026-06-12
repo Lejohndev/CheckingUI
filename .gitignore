@@ -1,6 +1,9 @@
 # Data folders
+build-check/
+downloads/
 license_plate_detector/data/
 license_plate_detector/ffmpeg.exe
+license_plate_detector/logs/
 
 # Python temporary files and virtual environments
 .venv/
