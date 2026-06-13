@@ -20,6 +20,8 @@ VEHICLE_TYPE_BY_CLASS_ID = {
 
 # Khởi tạo tracker
 mot_tracker = Sort()
+# Tăng max_age (ghi nhớ ID tối đa 30 frames khi mất box) và giảm min_hits để giữ ID ổn định
+mot_tracker = Sort(max_age=7, min_hits=2, iou_threshold=0.4)
 
 # Load models
 coco_model = YOLO('yolov8n.pt')
@@ -75,7 +77,8 @@ while ret:
         results[frame_nmr] = {}
         
         # 1. Phát hiện phương tiện
-        detections = coco_model(frame, device=0)[0]
+        # Bật agnostic_nms=True và thiết lập iou=0.45 để gộp các box đè lên nhau trên cùng 1 xe
+        detections = coco_model(frame, device=0, conf=0.3, agnostic_nms=True, iou=0.3, classes=vehicles)[0]
         detections_ = []
         detections_with_types = []
         for detection in detections.boxes.data.tolist():
@@ -94,7 +97,7 @@ while ret:
             track_ids = mot_tracker.update(np.asarray(detections_))
 
         # 3. Phát hiện biển số
-        license_plates = license_plate_detector(frame)[0]
+        license_plates = license_plate_detector(frame, device=0,conf=0.35, iou=0.45)[0]
         for license_plate in license_plates.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = license_plate
 
@@ -110,21 +113,20 @@ while ret:
                 vehicle_type = "unknown"
             if True: 
                 # Cắt ảnh biển số
-                license_plate_crop = frame[int(y1):int(y2), int(x1): int(x2), :]
-
-                # Phóng to ảnh lên để dễ đọc
-                license_plate_crop_resized = cv2.resize(license_plate_crop, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-
-              
-                gray_crop = cv2.cvtColor(license_plate_crop_resized, cv2.COLOR_BGR2GRAY)
+                h_frame, w_frame = frame.shape[:2]
                 
-             
-                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-                license_plate_crop_clahe = clahe.apply(gray_crop)
-            
+                # Nới rộng YOLO box ra mỗi bên 10 pixel để không bị mất chữ ở sát mép
+                margin = 10
+                crop_x1 = max(0, int(x1) - margin)
+                crop_y1 = max(0, int(y1) - margin)
+                crop_x2 = min(w_frame, int(x2) + margin)
+                crop_y2 = min(h_frame, int(y2) + margin)
+                
+                # Cắt ảnh biển số với viền đã được nới rộng
+                license_plate_crop = frame[crop_y1:crop_y2, crop_x1:crop_x2, :]
 
-              
-                license_plate_text, license_plate_text_score = read_license_plate(license_plate_crop_clahe)
+                license_plate_crop_resized = cv2.resize(license_plate_crop, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+                license_plate_text, license_plate_text_score = read_license_plate(license_plate_crop_resized)
 
                 if license_plate_text is not None:
                     print(f"[OK] Frame {frame_nmr} | Vehicle ID {car_id} | Plate: {license_plate_text} (Score: {license_plate_text_score:.2f})")

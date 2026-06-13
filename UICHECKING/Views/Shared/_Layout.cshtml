@@ -1,26 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - AI Traffic Vision</title>
+    <!-- Google Fonts for Inter and JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/UICHECKING.styles.css" asp-append-version="true" />
 </head>
-<body>
+
+<body class="text-light">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom main-nav">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark main-nav">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">AI Traffic Vision</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-area="" asp-controller="Home"
+                   asp-action="Index">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                        <path d="M2 12h4l3-9 5 18 3-9h5" />
+                    </svg>
+                    <span>AI Traffic Vision</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                    <ul class="navbar-nav flex-grow-1 ms-4">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Upload</a>
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Docs</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Models</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Datasets</a>
                         </li>
                     </ul>
                 </div>
@@ -28,15 +49,19 @@
         </nav>
     </header>
 
-    <div class="container app-shell">
-        <main role="main" class="pb-3">
+    <div class="container app-shell mt-4">
+        <main role="main">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - AI Traffic Vision
+    <footer class="footer mt-auto">
+        <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <span>&copy; 2026 - AI Traffic Vision</span>
+            <div class="d-flex gap-3">
+                <a href="#" class="text-muted text-decoration-none">GitHub</a>
+                <a href="#" class="text-muted text-decoration-none">Docs</a>
+            </div>
         </div>
     </footer>
 
@@ -45,4 +70,5 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>

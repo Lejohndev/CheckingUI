@@ -1,95 +1,151 @@
 @{
-    ViewData["Title"] = "AI Traffic Detection";
+    ViewData["Title"] = "Computer Vision Models";
 }
 
-<section class="hero-section">
-    <div class="row align-items-center g-4">
+<div class="text-center mb-4">
+    <img src="~/images/hero_banner.jpeg" alt="Hero Banner" class="img-fluid shadow"
+         style="border-radius: 20px; max-height: 350px; object-fit: cover; width: 100%;" />
+</div>
+
+<section class="hero-section mb-5">
+    <div class="row align-items-center g-5">
         <div class="col-lg-6">
-            <span class="hero-kicker">AI Traffic Detection</span>
-            <h1 class="hero-title">Nhận diện biển số xe từ video giao thông</h1>
+            <div class="hero-kicker mb-3">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+                YOLOv8 Detection
+            </div>
+            <h1 class="hero-title">Real-time Vehicle & License Plate Detection</h1>
             <p class="hero-copy">
-                Tải lên video, hệ thống sẽ gửi sang AI server để nhận diện phương tiện,
-                đọc biển số và xuất dữ liệu CSV phục vụ giám sát.
+                Experience state-of-the-art computer vision. Upload your traffic footage to instantly detect vehicles,
+                track movements, and read license plates with high accuracy.
             </p>
-            <div class="d-flex flex-wrap gap-2 hero-badges">
-                <span>MP4</span>
-                <span>AVI</span>
-                <span>MOV</span>
-                <span>FastAPI + MVC</span>
+            <div class="d-flex flex-wrap gap-2 hero-badges mt-4">
+                <span><svg class="me-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                           stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg> MP4 / AVI / MOV</span>
+                <span><svg class="me-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                           stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg> High Confidence</span>
+                <span><svg class="me-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                           stroke-width="2">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg> 60 FPS</span>
             </div>
         </div>
         <div class="col-lg-6">
             <div class="upload-panel">
                 <div class="panel-header">
                     <div>
-                        <p class="section-label mb-1">Video Upload</p>
-                        <h2>Process video</h2>
+                        <div class="section-label mb-1">Try it live</div>
+                        <h2>Process Video</h2>
                     </div>
-                    <div class="status-dot"></div>
+                    <div class="status-dot" title="AI Server Online"></div>
                 </div>
 
                 @if (ViewBag.ErrorMessage != null)
                 {
-                    <div class="alert alert-danger" role="alert">
+                    <div class="alert alert-danger bg-danger text-white border-0" role="alert">
                         @ViewBag.ErrorMessage
                     </div>
                 }
 
                 @if (!ViewData.ModelState.IsValid)
                 {
-                    <div class="alert alert-warning" role="alert" asp-validation-summary="All"></div>
+                    <div class="alert alert-warning bg-warning text-dark border-0" role="alert"
+                         asp-validation-summary="All"></div>
                 }
 
-                <form asp-controller="Home" asp-action="UploadVideo" method="post" enctype="multipart/form-data" id="uploadForm">
+                <form asp-controller="Home" asp-action="UploadVideo" method="post" enctype="multipart/form-data"
+                      id="uploadForm">
                     @Html.AntiForgeryToken()
-                    <div class="upload-zone mb-3">
-                        <input class="form-control form-control-lg" type="file" id="videoFile" name="videoFile" accept=".mp4,.avi,.mov,video/mp4,video/quicktime,video/x-msvideo" />
-                        <div class="upload-hint">
-                            <strong>Chọn video giao thông</strong>
-                            <span>Hỗ trợ .mp4, .avi, .mov</span>
+                    <div class="upload-zone mb-4">
+                        <svg class="mb-3 text-muted" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="2.5" ry="2.5" />
+                            <path d="M15.5 11.5L22 8v8l-6.5-3.5" />
+                        </svg>
+                        <input class="form-control form-control-lg w-100" type="file" id="videoFile" name="videoFile"
+                               accept=".mp4,.avi,.mov,video/mp4,video/quicktime,video/x-msvideo" />
+                        <div class="upload-hint mt-3">
+                            <strong class="d-block text-white mb-1">Select traffic video</strong>
+                            <span class="text-muted">Supported formats: MP4, AVI, MOV</span>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100" id="processButton">
-                        <span class="button-text">Process Video</span>
-                        <span class="spinner-border spinner-border-sm d-none" id="processSpinner" aria-hidden="true"></span>
+                    <button type="submit"
+                            class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center gap-2"
+                            id="processButton">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                        <span class="button-text">Run Inference</span>
+                        <span class="spinner-border spinner-border-sm d-none" id="processSpinner"
+                              aria-hidden="true"></span>
                     </button>
                 </form>
 
                 <div class="loading-card d-none" id="loadingCard">
-                    <div class="spinner-border text-primary" role="status"></div>
+                    <div class="spinner-border" role="status"></div>
                     <div>
-                        <strong>Đang xử lý video...</strong>
-                        <p>AI server có thể mất vài phút tùy độ dài video.</p>
+                        <strong class="d-block text-white">Running YOLOv8...</strong>
+                        <span class="text-muted small">Tracking vehicles and recognizing plates. This may take a
+                            moment.</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<section class="feature-band">
-    <div class="row g-3">
-        <div class="col-md-4">
-            <div class="feature-item">
-                <span>01</span>
-                <h3>Lưu video upload</h3>
-                <p>File được lưu vào thư mục uploads trước khi gửi sang AI.</p>
+    <section class="feature-band mt-5">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-item">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="text-primary">01</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             class="text-muted">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                        </svg>
+                    </div>
+                    <h3>Upload & Preprocess</h3>
+                    <p>Videos are securely uploaded and decoded into frames ready for the deep learning pipeline.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-item">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="text-primary">02</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             class="text-muted">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
+                    </div>
+                    <h3>AI Inference</h3>
+                    <p>Our FastAPI backend processes frames using advanced object detection and OCR algorithms.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-item">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="text-primary">03</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             class="text-muted">
+                            <path
+                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                            <line x1="12" y1="22.08" x2="12" y2="12" />
+                        </svg>
+                    </div>
+                    <h3>Rich Analytics</h3>
+                    <p>Review detected vehicles, confident plate readings, and download structured CSV reports instantly.
+                    </p>
+                </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="feature-item">
-                <span>02</span>
-                <h3>Gọi FastAPI</h3>
-                <p>Backend MVC gửi video qua HttpClient đến endpoint xử lý.</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="feature-item">
-                <span>03</span>
-                <h3>Dashboard kết quả</h3>
-                <p>Video, CSV, bảng dữ liệu và biểu đồ được hiển thị cùng lúc.</p>
-            </div>
-        </div>
-    </div>
-</section>
+    </section>

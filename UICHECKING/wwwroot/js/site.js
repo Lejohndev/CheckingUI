@@ -43,15 +43,19 @@ function renderTrafficCharts() {
         labels: data.vehicleLabels,
         datasets: [{
           data: data.vehicleValues,
-          backgroundColor: ["#0c74a5", "#14b8a6", "#94a3b8", "#2563eb", "#64748b"],
-          borderWidth: 0
+          backgroundColor: ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#6366f1"],
+          borderColor: "#1f2937",
+          borderWidth: 2
         }]
       },
       options: {
         responsive: true,
         plugins: {
           legend: {
-            position: "bottom"
+            position: "bottom",
+            labels: {
+              color: "#9ca3af"
+            }
           }
         }
       }

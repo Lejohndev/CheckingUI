@@ -97,13 +97,13 @@ input_csv = sys.argv[1] if len(sys.argv) > 1 else "test.csv"
 output_csv = sys.argv[2] if len(sys.argv) > 2 else "test_interpolated.csv"
 header = ['frame_nmr', 'car_id', 'vehicle_type', 'car_bbox', 'license_plate_bbox', 'license_plate_bbox_score', 'license_number', 'license_number_score']
 
-with open(input_csv, 'r', newline='') as file:
+with open(input_csv, 'r', newline='', encoding='utf-8') as file:
     reader = csv.DictReader(file)
     data = list(reader)
 
 interpolated_data = interpolate_bounding_boxes(data)
 
-with open(output_csv, 'w', newline='') as file:
+with open(output_csv, 'w', newline='', encoding='utf-8') as file:
     writer = csv.DictWriter(file, fieldnames=header)
     writer.writeheader()
     writer.writerows(interpolated_data)
