@@ -1,16 +1,30 @@
 import string
+import os
+
+import torch  # Load Torch DLLs before Paddle to avoid CUDA DLL conflicts on Windows.
+import paddle
 from PIL import Image
 from paddleocr import PaddleOCR
-import string
+
 if not hasattr(Image, "ANTIALIAS"):
     Image.ANTIALIAS = Image.Resampling.LANCZOS
 
 
+PADDLE_OCR_DEVICE = os.environ.get("PADDLE_OCR_DEVICE", "gpu:0")
 
+if PADDLE_OCR_DEVICE.startswith("gpu") and not paddle.device.is_compiled_with_cuda():
+    raise RuntimeError(
+        "PaddleOCR is configured to use GPU, but this Python has CPU-only Paddle. "
+        "Run with a Python environment that has paddlepaddle-gpu installed, or set "
+        "PADDLE_OCR_DEVICE=cpu."
+    )
 
 
 ocr = PaddleOCR(
-    use_angle_cls=False, 
+    device=PADDLE_OCR_DEVICE,
+    use_doc_orientation_classify=False,
+    use_doc_unwarping=False,
+    use_textline_orientation=False,
     lang='en', 
     enable_mkldnn=False,
     det_db_thresh=0.1,        

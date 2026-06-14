@@ -322,7 +322,8 @@ public class HomeController : Controller
                 row.TryAdd(headers[headerIndex], headerIndex < values.Count ? values[headerIndex] : string.Empty);
             }
 
-            var confidence = TryGetDouble(row, "licensenumberscore", "confidence", "licenseplatebboxscore", "score");
+            var confidence = TryGetDouble(row, "licensenumberscore", "confidence", "score");
+            var plateDetectionConfidence = TryGetDouble(row, "licenseplatebboxscore", "platebboxscore", "detectionscore");
             var timeDetected = TryGetDateTime(row, "timedetected", "timestamp", "time");
             if (timeDetected == DateTime.MinValue)
             {
@@ -336,6 +337,7 @@ public class HomeController : Controller
                 PlateNumber = GetFirstValue(row, "platenumber", "licenseplate", "licensenumber", "plate") ?? "Unknown",
                 VehicleType = ToVietnameseVehicleType(GetFirstValue(row, "vehicletype", "type", "class")),
                 Confidence = confidence,
+                PlateDetectionConfidence = plateDetectionConfidence,
                 TimeDetected = timeDetected == DateTime.MinValue ? DateTime.Now : timeDetected,
                 ImagePath = GetFirstValue(row, "imagepath", "image", "thumbnail") ?? string.Empty
             });

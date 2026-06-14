@@ -14,6 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "uploads"
 PROCESSED_DIR = BASE_DIR / "processed"
 ALLOWED_EXTENSIONS = {".mp4", ".avi", ".mov"}
+PIPELINE_PYTHON = os.environ.get("TRAFFIC_AI_PYTHON") or sys.executable
 
 UPLOAD_DIR.mkdir(exist_ok=True)
 PROCESSED_DIR.mkdir(exist_ok=True)
@@ -102,19 +103,19 @@ def run_pipeline(input_video_path: Path, output_csv_path: Path, output_video_pat
     try:
         # Bước 1: Trích xuất AI
         subprocess.run(
-            [sys.executable, "main.py", str(input_video_path), str(raw_csv_path)],
+            [PIPELINE_PYTHON, "main.py", str(input_video_path), str(raw_csv_path)],
             cwd=BASE_DIR, env=process_env, check=True,
         )
         
         # Bước 2: Nội suy dữ liệu
         subprocess.run(
-            [sys.executable, "add_missing_data.py", str(raw_csv_path), str(output_csv_path)],
+            [PIPELINE_PYTHON, "add_missing_data.py", str(raw_csv_path), str(output_csv_path)],
             cwd=BASE_DIR, env=process_env, check=True,
         )
         
         # Bước 3: Visualize (Vẽ khung hình vào file RAW TẠM THỜI)
         subprocess.run(
-            [sys.executable, "visualize.py", str(input_video_path), str(output_csv_path), str(raw_video_path)],
+            [PIPELINE_PYTHON, "visualize.py", str(input_video_path), str(output_csv_path), str(raw_video_path)],
             cwd=BASE_DIR, env=process_env, check=True,
         )
         
